@@ -1,0 +1,1423 @@
+<!-- START OF FILE text/html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>极简智读 v2.5 - 智享统计版</title>
+    <!-- 引入 Tailwind CSS 用于快速布局 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Remix Icon 图标库 -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <!-- 引入 Marked 用于 Markdown 解析 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* --- 1. CSS 变量定义 (配色方案) --- */
+        :root {
+            /* 基础变量，具体值由 data-theme 属性决定 */
+            --bg-color: #FAF7F2; 
+            --text-color: #38302B; 
+            --container-bg: #FAF7F2;
+            --accent-color: #8C6A5D;
+            --highlight-bg: rgba(255, 219, 88, 0.3);
+            --ui-bg: rgba(250, 247, 242, 0.98);
+            --border-color: rgba(60, 40, 30, 0.08);
+            --sidebar-hover: rgba(0,0,0,0.03);
+            --card-bg: #ffffff;
+            --font-size: 18px;
+            --line-height: 1.8;
+            --reader-width: 800px;
+        }
+
+        /* 主题：羊皮纸 (默认) */
+        [data-theme="paper"] {
+            --bg-color: #FAF7F2; --text-color: #38302B; --container-bg: #FAF7F2;
+            --accent-color: #8C6A5D; --ui-bg: rgba(250, 247, 242, 0.98);
+            --border-color: rgba(60, 40, 30, 0.1); --card-bg: #FFFFFF;
+        }
+        /* 主题：面壁 (灰/Zen) */
+        [data-theme="wall"] {
+            --bg-color: #E3E3E3; --text-color: #2F3542; --container-bg: #E3E3E3;
+            --accent-color: #57606F; --ui-bg: rgba(227, 227, 227, 0.98);
+            --border-color: rgba(0,0,0,0.1); --card-bg: #F1F2F6;
+        }
+        /* 主题：香芋 (浅紫) */
+        [data-theme="lilac"] {
+            --bg-color: #F8F0FC; --text-color: #4A235A; --container-bg: #F8F0FC;
+            --accent-color: #8E44AD; --ui-bg: rgba(248, 240, 252, 0.98); --highlight-bg: rgba(142, 68, 173, 0.15);
+            --border-color: rgba(142, 68, 173, 0.1); --card-bg: #FFFFFF;
+        }
+        /* 主题：护眼 (绿) */
+        [data-theme="green"] { 
+            --bg-color: #C7EDCC; --text-color: #2F3E2F; --container-bg: #C7EDCC; 
+            --accent-color: #388E3C; --ui-bg: rgba(199, 237, 204, 0.98); 
+            --border-color: rgba(0,0,0,0.08); --card-bg: #E8F5E9; 
+        }
+        /* 主题：纯白 */
+        [data-theme="white"] { 
+            --bg-color: #FFFFFF; --text-color: #111827; --container-bg: #FFFFFF; 
+            --accent-color: #2563EB; --highlight-bg: rgba(37, 99, 235, 0.1); 
+            --ui-bg: rgba(255, 255, 255, 0.98); --border-color: #E5E7EB; --card-bg: #F9FAFB; 
+        }
+        /* 主题：暗黑 */
+        [data-theme="dark"] {
+            --bg-color: #1A1A1A; --text-color: #B0B0B0; --container-bg: #1A1A1A;
+            --accent-color: #718096; --highlight-bg: rgba(255, 255, 255, 0.1);
+            --ui-bg: rgba(26, 26, 26, 0.98); --border-color: rgba(255,255,255,0.15);
+            --sidebar-hover: rgba(255,255,255,0.05); --card-bg: #2D2D2D;
+        }
+
+        /* --- 2. 通用布局样式 --- */
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
+            transition: background-color 0.4s ease, color 0.4s ease;
+            overflow-x: hidden;
+        }
+
+        /* 沉浸式 UI 动画 */
+        .immersive-ui { transition: transform 0.3s ease, opacity 0.3s ease; }
+        .ui-hidden .top-bar { transform: translateY(-100%); }
+        .ui-hidden .bottom-bar { transform: translateY(100%); }
+        
+        /* 阅读容器 */
+        .reader-container {
+            background-color: var(--container-bg);
+            min-height: 100vh;
+            max-width: var(--reader-width);
+            margin: 0 auto;
+            padding: 80px 25px;
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            transition: padding 0.3s;
+        }
+        
+        /* Markdown 内容样式 */
+        .markdown-body h1 { font-size: 1.8em; margin-bottom: 1.5em; text-align: center; color: var(--text-color); }
+        .markdown-body h2 { font-size: 1.4em; margin: 1.5em 0 0.8em; border-bottom: 1px solid var(--border-color); color: var(--text-color); }
+        .markdown-body h3 { font-size: 1.2em; margin: 1.2em 0 0.6em; font-weight: bold; color: var(--text-color); }
+        .markdown-body p { margin-bottom: 1em; text-align: justify; }
+        .markdown-body blockquote { border-left: 4px solid var(--accent-color); padding-left: 1em; color: var(--accent-color); opacity: 0.85; margin: 1em 0; }
+        .markdown-body code { background: rgba(0,0,0,0.05); padding: 2px 4px; border-radius: 4px; font-size: 0.9em; }
+
+        /* 高亮划线样式 */
+        .highlight-text {
+            background: var(--highlight-bg);
+            border-bottom: 1px dashed var(--accent-color);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .highlight-text:hover { background: rgba(0,0,0,0.1); }
+
+        /* --- 3. 交互组件样式 --- */
+        
+        /* 气泡菜单 */
+        #bubble-menu {
+            position: absolute; background: #333; border-radius: 8px; padding: 6px;
+            display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            gap: 6px; transform: translateX(-50%); 
+        }
+        #bubble-menu button { color: white; padding: 4px 10px; font-size: 13px; border-radius: 4px; }
+        #bubble-menu button:hover { background: #555; }
+
+        /* 笔记弹出框 Popover */
+        #note-popup {
+            position: absolute; background: var(--ui-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 12px; width: 260px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15); z-index: 1100;
+            display: none; font-size: 14px; color: var(--text-color); backdrop-filter: blur(10px);
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed; top: 0; height: 100%; width: 340px;
+            background: var(--ui-bg); z-index: 2000;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-color: var(--border-color); color: var(--text-color);
+            box-shadow: 0 0 40px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+        .sidebar-left { left: -360px; border-right-width: 1px; }
+        .sidebar-left.active { left: 0; }
+        .sidebar-right { right: -360px; border-left-width: 1px; }
+        .sidebar-right.active { right: 0; }
+
+        .toc-item { 
+            padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: background 0.2s; 
+            margin-bottom: 6px; border: 1px solid transparent;
+        }
+        .toc-item:hover { background: var(--sidebar-hover); border-color: var(--border-color); }
+        .toc-item.active { background: var(--sidebar-hover); color: var(--accent-color); font-weight: bold; border-color: var(--accent-color); }
+        
+        .toc-summary-box {
+            font-size: 12px; background: rgba(0,0,0,0.03); padding: 8px; 
+            border-radius: 6px; margin-top: 6px; font-weight: normal; color: var(--text-color);
+            opacity: 0.8; line-height: 1.5; display: flex; flex-direction: column; gap: 6px;
+        }
+        .toc-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+        .toc-btn { font-size: 10px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color); opacity: 0.7; transition:all 0.2s; display: flex; align-items: center; gap: 4px; }
+        .toc-btn:hover { background: var(--accent-color); color: white; border-color: var(--accent-color); opacity: 1; }
+
+        /* 全书笔记编辑区 */
+        #global-notes-editor {
+            width: 100%; height: 75vh; background: transparent; border: none; outline: none;
+            font-size: var(--font-size); line-height: var(--line-height); color: var(--text-color); resize: none;
+        }
+
+        /* --- 4. 看板 & 图表样式 --- */
+        .stat-card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 15px; text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center;
+        }
+        .stat-value { font-size: 24px; font-weight: bold; color: var(--accent-color); }
+        .stat-label { font-size: 12px; opacity: 0.6; margin-top: 4px; }
+        
+        .dash-tab-btn { padding: 8px 16px; opacity: 0.5; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .dash-tab-btn.active { opacity: 1; border-bottom-color: var(--accent-color); font-weight: bold; color: var(--accent-color); }
+
+        .chapter-row { display: grid; grid-template-columns: 50px 1fr 60px 80px; align-items: center; padding: 10px; border-bottom: 1px solid var(--border-color); font-size: 13px; }
+        .chapter-row:last-child { border-bottom: none; }
+        .chapter-row:hover { background: var(--sidebar-hover); }
+
+        /* 图表样式 */
+        .chart-bar-container { display: flex; align-items: flex-end; justify-content: space-between; height: 120px; gap: 8px; padding-top: 20px; }
+        .chart-bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .chart-bar { width: 100%; background: var(--accent-color); opacity: 0.7; border-radius: 4px 4px 0 0; transition: height 0.5s ease; min-height: 2px; }
+        .chart-bar:hover { opacity: 1; }
+        .chart-label { font-size: 10px; opacity: 0.5; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+        /* 时间轴 */
+        .timeline-container { position: relative; padding-left: 20px; border-left: 2px solid var(--border-color); margin-left: 10px; margin-top: 10px; }
+        .timeline-item { position: relative; margin-bottom: 20px; }
+        .timeline-dot {
+            position: absolute; left: -27px; top: 4px; width: 12px; height: 12px;
+            background: var(--accent-color); border-radius: 50%; border: 2px solid var(--ui-bg); z-index: 10;
+        }
+        .timeline-content { background: var(--sidebar-hover); padding: 10px 14px; border-radius: 8px; font-size: 13px; }
+        .timeline-time { font-family: monospace; opacity: 0.5; font-size: 11px; margin-bottom: 2px; }
+
+        /* 设置面板 */
+        #style-panel {
+            position: absolute; top: 55px; right: 60px;
+            background: var(--ui-bg); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 15px; width: 300px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: none; flex-direction: column; gap: 12px; z-index: 2100;
+        }
+        .style-row { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+        .color-btn { width: 24px; height: 24px; border: 1px solid rgba(0,0,0,0.1); border-radius: 50%; cursor: pointer; position: relative; transition: transform 0.2s; }
+        .color-btn:hover { transform: scale(1.1); }
+        .color-btn.active::after { content: ''; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px; border: 2px solid var(--accent-color); border-radius: 50%; }
+
+        /* 悬浮球 & AI */
+        #float-ball {
+            position: fixed; right: 20px; bottom: 100px; width: 48px; height: 48px;
+            background: var(--accent-color); color: white; border-radius: 50%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1500; cursor: pointer;
+            transition: transform 0.1s;
+        }
+        #float-ball:active { transform: scale(0.95); }
+        
+        #ai-card {
+            position: fixed; right: 20px; bottom: 20px; width: 360px; height: 550px;
+            background: white; border-radius: 16px; display: none; flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 3000; overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        [data-theme="dark"] #ai-card { background: #252525; border-color: #333; color: #eee; }
+
+        /* --- 思维导图样式 --- */
+        .mm-container { display: flex; align-items: center; padding: 60px; min-width: fit-content; min-height: fit-content; }
+        .mm-tree { display: flex; align-items: center; }
+        .mm-tree ul { display: flex; flex-direction: column; padding-left: 40px; position: relative; margin: 0; list-style: none; }
+        .mm-tree li { position: relative; display: flex; align-items: center; margin: 10px 0; }
+        .mm-node {
+            display: inline-block; padding: 8px 12px; border: 1px solid var(--border-color);
+            background: var(--ui-bg); border-radius: 6px; font-size: 13px; color: var(--text-color);
+            max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            cursor: pointer; z-index: 5; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .mm-node:hover { background: var(--accent-color); color: white; white-space: normal; z-index: 100; transform: scale(1.05); }
+        .mm-node.mm-root { background: var(--accent-color); color: white; font-weight: bold; font-size: 16px; padding: 10px 20px; }
+        .mm-node.mm-global-note { border: 2px solid var(--accent-color); font-weight: bold; background: var(--card-bg); }
+        .mm-node.mm-summary { border-style: dashed; font-style: italic; background: rgba(0,0,0,0.02); border-color: var(--accent-color); min-width: 150px; }
+        .mm-tree li::before { content: ''; position: absolute; left: 0; top: 50%; width: 40px; height: 1px; background: var(--accent-color); opacity: 0.4; }
+        .mm-tree > li::before { display: none; }
+        .mm-tree li::after { content: ''; position: absolute; left: 0; top: 0; width: 1px; height: 100%; background: var(--accent-color); opacity: 0.4; }
+        .mm-tree ul > li:first-child::after { top: 50%; height: 50%; }
+        .mm-tree ul > li:last-child::after { height: 50%; top: 0; }
+        .mm-tree ul > li:only-child::after { display: none; }
+        .toggle-btn {
+            position: absolute; right: -10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px;
+            background: var(--accent-color); color: white; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-size: 12px; cursor: pointer; z-index: 20;
+        }
+        .mm-tree li.collapsed > ul { display: none; }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+
+        @media (max-width: 640px) {
+            .reader-container { padding: 80px 20px; --font-size: 16px; }
+            #style-panel { right: 10px; width: 90vw; }
+            .sidebar { width: 85vw; }
+            .mm-container { padding: 20px; }
+        }
+    </style>
+</head>
+<body data-theme="paper">
+
+    <!-- 顶部导航栏 -->
+    <header class="top-bar fixed top-0 w-full bg-[var(--ui-bg)] backdrop-blur-md z-50 flex justify-between items-center px-4 py-2 border-b border-[var(--border-color)] immersive-ui shadow-sm">
+        <div class="flex items-center gap-3">
+            <button onclick="toggleSidebar('left')" class="p-2 text-xl opacity-70 hover:opacity-100 rounded"><i class="ri-menu-2-line"></i></button>
+            <span id="header-title" class="text-sm font-bold truncate max-w-[120px] opacity-90">极简智读</span>
+        </div>
+        
+        <div class="flex gap-1 items-center">
+            <button onclick="showDashboard('stats')" class="p-2 opacity-70 hover:opacity-100 rounded text-[var(--accent-color)]" title="数据看板"><i class="ri-pie-chart-2-fill text-lg"></i></button>
+            <button onclick="toggleStylePanel()" class="p-2 opacity-70 hover:opacity-100 rounded" title="显示设置"><i class="ri-t-shirt-line"></i></button>
+            <button onclick="openAIChat()" class="p-2 opacity-70 hover:opacity-100 rounded"><i class="ri-chat-smile-3-line text-lg"></i></button>
+            <button onclick="toggleSidebar('right')" class="p-2 opacity-70 hover:opacity-100 rounded relative">
+                <i class="ri-book-mark-line"></i>
+                <span id="note-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+            </button>
+            <button onclick="showImportModal()" class="ml-2 text-xs border border-[var(--text-color)] opacity-50 hover:opacity-100 px-3 py-1 rounded-full transition">导入</button>
+        </div>
+    </header>
+
+    <!-- 样式设置面板 -->
+    <div id="style-panel">
+        <div class="style-row">
+            <span>配色主题</span>
+            <div class="grid grid-cols-6 gap-2">
+                <div onclick="setTheme('white')" class="color-btn bg-white" title="纯白"></div>
+                <div onclick="setTheme('dark')" class="color-btn bg-[#1E1E1E]" title="暗黑"></div>
+                <div onclick="setTheme('paper')" class="color-btn bg-[#FAF7F2]" title="羊皮纸"></div>
+                <div onclick="setTheme('wall')" class="color-btn bg-[#E3E3E3]" title="面壁"></div>
+                <div onclick="setTheme('lilac')" class="color-btn bg-[#F8F0FC]" title="香芋"></div>
+                <div onclick="setTheme('green')" class="color-btn bg-[#C7EDCC]" title="护眼"></div>
+            </div>
+        </div>
+        <div class="style-row border-t border-[var(--border-color)] pt-3">
+            <span>字号</span>
+            <div class="flex items-center gap-2 bg-[var(--sidebar-hover)] rounded p-1">
+                <button onclick="changeFontSize(-1)" class="px-2 hover:bg-[var(--bg-color)] rounded"><i class="ri-subtract-line"></i></button>
+                <span id="font-size-display" class="px-2 text-xs opacity-60">18</span>
+                <button onclick="changeFontSize(1)" class="px-2 hover:bg-[var(--bg-color)] rounded"><i class="ri-add-line"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 左侧目录栏 -->
+    <aside id="sidebar-left" class="sidebar sidebar-left">
+        <div class="p-5 border-b border-[var(--border-color)] flex justify-between items-center">
+            <h2 class="font-bold text-lg">目录</h2>
+            <button onclick="toggleSidebar('left')" class="opacity-50 hover:opacity-100"><i class="ri-close-line text-xl"></i></button>
+        </div>
+        <div class="flex flex-col h-full overflow-hidden">
+            <nav id="chapter-list" class="flex-1 overflow-y-auto p-3 text-sm no-scrollbar"></nav>
+            <div class="p-3 border-t border-[var(--border-color)]">
+                <div onclick="openGlobalNotes()" class="toc-item flex items-center gap-2 text-[var(--accent-color)] bg-[var(--sidebar-hover)]">
+                    <i class="ri-book-2-fill"></i>
+                    <span class="font-bold">📝 全书思维笔记</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 右侧笔记栏 -->
+    <aside id="sidebar-right" class="sidebar sidebar-right">
+        <div class="p-5 border-b border-[var(--border-color)] flex justify-between items-center">
+            <h2 class="font-bold text-lg">笔记 (<span id="selected-count">0</span>)</h2>
+            <button onclick="toggleSidebar('right')" class="opacity-50 hover:opacity-100"><i class="ri-close-line text-xl"></i></button>
+        </div>
+        <div id="notes-list" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
+            <div class="text-center text-gray-400 mt-10">暂无笔记</div>
+        </div>
+        <div class="p-4 border-t border-[var(--border-color)] space-y-2">
+            <button onclick="openMindMap()" class="w-full bg-[var(--text-color)] text-[var(--bg-color)] py-2 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 shadow-sm transition text-xs">
+                <i class="ri-mind-map"></i> 全书思维导图 (含笔记)
+            </button>
+            <button onclick="analyzeSelectedNotes()" class="w-full bg-[var(--accent-color)] text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 shadow-sm transition text-xs">
+                <i class="ri-magic-line"></i> AI 深度分析
+            </button>
+            <button onclick="exportWithData()" class="w-full border border-[var(--text-color)] opacity-40 hover:opacity-80 py-2 rounded-lg text-xs transition">
+                <i class="ri-download-line"></i> 导出数据 (含进度与笔记)
+            </button>
+        </div>
+    </aside>
+
+    <!-- 主阅读区域 -->
+    <main id="reader" class="reader-container shadow-sm" onclick="handleCenterClick(event)">
+        <!-- 正常章节内容 -->
+        <div id="content" class="markdown-body">
+            <div class="text-center py-40">
+                <div class="w-20 h-20 bg-[var(--accent-color)] text-white rounded-full flex items-center justify-center mx-auto mb-6 text-3xl shadow-lg opacity-80">
+                    <i class="ri-book-open-line"></i>
+                </div>
+                <h1 class="text-2xl mb-4 opacity-80 font-normal">极简智读 v2.5</h1>
+                <p class="opacity-50 text-sm">点击右上角导入 Markdown 文件<br>自动记录阅读进度与痕迹</p>
+            </div>
+        </div>
+        <!-- 全书笔记编辑器 (默认隐藏) -->
+        <div id="global-editor-container" style="display:none;" class="animate-fade-in relative">
+            <div class="flex justify-between items-center border-b border-[var(--border-color)] pb-4 mb-4">
+                <h1 class="text-2xl opacity-80">📝 全书思维笔记</h1>
+                <!-- 实时保存按钮 -->
+                <button onclick="saveGlobalNotesManually()" class="bg-[var(--accent-color)] text-white px-4 py-2 rounded shadow text-sm hover:opacity-90 transition flex items-center gap-2">
+                    <i class="ri-save-3-line"></i> 保存并记录
+                </button>
+            </div>
+            <textarea id="global-notes-editor" placeholder="在这里记录全书的宏观思考、日志或备忘... (会自动追加日期)"></textarea>
+        </div>
+    </main>
+
+    <!-- 悬浮球：点击打开阅读痕迹 Log -->
+    <div id="float-ball" onclick="showDashboard('log')" title="点击查看阅读痕迹，拖拽移动">
+        <span class="ball-time text-xs font-mono font-bold" id="ball-timer">00:00</span>
+    </div>
+
+    <!-- 底部翻页栏 -->
+    <footer class="bottom-bar fixed bottom-0 w-full bg-[var(--ui-bg)] backdrop-blur-md py-3 flex justify-around items-center border-t border-[var(--border-color)] immersive-ui z-40 text-sm">
+        <button onclick="prevPage()" class="px-4 py-2 opacity-60 hover:opacity-100"><i class="ri-arrow-left-s-line"></i> 上一章</button>
+        <span id="page-info" class="text-xs opacity-40 font-mono">0 / 0</span>
+        <button onclick="nextPage()" class="px-4 py-2 opacity-60 hover:opacity-100">下一章 <i class="ri-arrow-right-s-line"></i></button>
+    </footer>
+
+    <!-- 数据看板 (Dashboard) -->
+    <div id="dashboard-modal" class="fixed inset-0 bg-black/60 hidden z-[5000] items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-[var(--ui-bg)] rounded-xl w-full max-w-3xl p-6 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex gap-4">
+                    <button id="tab-btn-stats" onclick="switchDashTab('stats')" class="dash-tab-btn active">数据概览</button>
+                    <button id="tab-btn-log" onclick="switchDashTab('log')" class="dash-tab-btn">阅读痕迹</button>
+                </div>
+                <button onclick="closeModal('dashboard-modal')" class="opacity-50 hover:opacity-100"><i class="ri-close-line text-xl"></i></button>
+            </div>
+            
+            <!-- 内容区域 1: 统计概览 -->
+            <div id="dash-content-stats" class="flex-1 overflow-y-auto pr-2">
+                <!-- 基础统计卡片 -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="stat-card">
+                        <div class="stat-value" id="dash-progress">0%</div>
+                        <div class="stat-label">阅读进度</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="dash-time">0m</div>
+                        <div class="stat-label">总时长</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="dash-notes">0</div>
+                        <div class="stat-label">笔记&划线</div>
+                    </div>
+                    <!-- 新增：编辑统计 -->
+                    <div class="stat-card">
+                        <div class="stat-value" id="dash-edit-stats">0</div>
+                        <div class="stat-label">总结与笔记字数</div>
+                    </div>
+                </div>
+
+                <!-- 新增：阅读活跃度图表 (按日期) -->
+                <div class="bg-[var(--card-bg)] rounded-lg border border-[var(--border-color)] p-4 mb-6">
+                    <h4 class="font-bold mb-2 text-sm opacity-70">📅 近7日活跃度 (基于操作次数)</h4>
+                    <div id="activity-chart" class="chart-bar-container">
+                        <!-- JS 自动生成图表 -->
+                        <div class="text-xs opacity-40 w-full text-center">暂无足够数据生成图表</div>
+                    </div>
+                </div>
+
+                <!-- 章节详情表 -->
+                <h4 class="font-bold mb-3 text-sm opacity-70 border-b pb-2 border-[var(--border-color)]">章节详情</h4>
+                <div class="bg-[var(--card-bg)] rounded-lg border border-[var(--border-color)]">
+                    <div class="chapter-row font-bold opacity-60 bg-[var(--sidebar-hover)]">
+                        <span>#</span>
+                        <span>章节标题</span>
+                        <span class="text-center">笔记</span>
+                        <span class="text-right">总结</span>
+                    </div>
+                    <div id="dash-chapter-list">
+                        <!-- JS 渲染列表 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 内容区域 2: 痕迹 Log -->
+            <div id="dash-content-log" class="flex-1 overflow-y-auto pr-2 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="font-bold text-sm opacity-70">👣 行为日志 (Traces)</h4>
+                    <span class="text-xs opacity-50">记录每一次阅读、笔记与思考</span>
+                </div>
+                <div id="timeline-list">
+                    <!-- JS 渲染 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 气泡菜单 -->
+    <div id="bubble-menu">
+        <button onclick="handleHighlight()"><i class="ri-markup-line"></i> 划线</button>
+        <button onclick="openNoteModal()"><i class="ri-edit-line"></i> 笔记</button>
+        <button onclick="askAIWithSelection()"><i class="ri-question-answer-line"></i> 问AI</button>
+    </div>
+    
+    <!-- 笔记详情 Popover -->
+    <div id="note-popup">
+        <div class="flex justify-between items-start mb-2 opacity-50 text-xs">
+            <span>笔记详情</span>
+            <button class="hover:text-red-500" id="popup-delete-btn"><i class="ri-delete-bin-line"></i></button>
+        </div>
+        <div id="popup-content" class="mb-2 text-sm leading-relaxed"></div>
+        <div id="popup-comment" class="text-xs bg-black/5 p-2 rounded text-[var(--accent-color)] italic hidden"></div>
+    </div>
+
+
+    <!-- AI 助手卡片 -->
+    <div id="ai-card">
+        <!-- 头部：增加了设置按钮 -->
+        <div class="bg-[var(--accent-color)] text-white p-3.5 flex justify-between items-center cursor-move" id="ai-header">
+            <span class="text-sm font-bold"><i class="ri-robot-fill mr-1"></i> 阅读助手</span>
+            <div class="flex gap-3 text-white/80">
+                <button onclick="toggleAISettings()" title="设置提示词"><i class="ri-settings-3-line"></i></button> <!-- [新增] -->
+                <button onclick="clearChat()" title="清空"><i class="ri-delete-bin-line"></i></button>
+                <button onclick="toggleAICard()"><i class="ri-close-line"></i></button>
+            </div>
+        </div>
+    
+        <!-- [修改] AI 设置面板层 -->
+        <div id="ai-settings-layer" class="hidden absolute inset-0 top-[50px] bg-white z-20 flex flex-col p-5 animate-fade-in">
+            <div class="flex justify-between items-center mb-2">
+                <h4 class="font-bold text-sm">AI 角色设定</h4>
+                <span class="text-xs text-[var(--accent-color)] cursor-pointer hover:underline" onclick="document.getElementById('ai-prompt-input').value=state.aiPresets[0].prompt">恢复默认</span>
+            </div>
+        
+            <!-- [新增] 预设标签容器 -->
+            <div id="preset-tags" class="flex flex-wrap gap-2 mb-3">
+                <!-- JS 会在这里自动生成按钮 -->
+            </div>
+        
+            <p class="text-xs text-gray-400 mb-2">点击上方标签可快速填入，或在下方自由编辑：</p>
+            
+            <!-- 输入框 -->
+            <textarea id="ai-prompt-input" class="w-full border p-3 text-sm rounded flex-1 mb-4 bg-gray-50 focus:outline-[var(--accent-color)] resize-none shadow-inner"></textarea>
+            
+            <!-- 按钮组 -->
+            <div class="flex gap-2">
+                <button onclick="saveAIPrompt()" class="flex-1 bg-[var(--accent-color)] text-white py-2 rounded text-sm hover:opacity-90 shadow-sm">保存并生效</button>
+                <button onclick="toggleAISettings()" class="flex-1 border border-gray-300 py-2 rounded text-sm hover:bg-gray-50">取消</button>
+            </div>
+        </div>
+    
+        <!-- 原有的聊天列表 -->
+        <div id="ai-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-stone-50/50 text-sm">
+            <div class="bg-white p-3 rounded-lg border shadow-sm text-black/80 text-xs leading-relaxed">
+                👋 我是你的阅读助手。选中文字提问，或直接输入问题。
+            </div>
+        </div>
+        
+        <!-- AI 卡片底部区域 -->
+        <div class="border-t bg-white flex flex-col">
+            
+            <!-- [新增] 快捷操作栏 (默认显示) -->
+            <div id="ai-quick-actions" class="flex gap-2 overflow-x-auto px-3 py-2 no-scrollbar border-b border-gray-100 bg-gray-50/50 whitespace-nowrap">
+                <!-- JS 会在这里自动生成按钮 -->
+            </div>
+        
+            <!-- 原有的输入框区域 -->
+            <div class="p-3 flex gap-2 relative">
+                <input type="text" id="ai-input" placeholder="输入问题..." class="flex-1 border bg-gray-50 rounded-lg px-3 py-2 text-sm focus:outline-none text-black transition-colors focus:bg-white focus:border-[var(--accent-color)]">
+                <button onclick="sendAIQuery()" class="bg-[var(--accent-color)] text-white w-9 h-9 rounded-lg flex items-center justify-center hover:opacity-90 shadow-sm"><i class="ri-send-plane-fill"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入文件 Modal -->
+    <div id="import-modal" class="fixed inset-0 bg-black/60 hidden z-[5000] items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-[var(--ui-bg)] rounded-xl w-full max-w-md p-6 shadow-2xl">
+            <h3 class="font-bold mb-4 text-lg">导入书籍</h3>
+            <input type="password" id="api-key" placeholder="DashScope API Key (选填)" class="w-full border border-[var(--border-color)] bg-black/5 rounded p-3 text-sm mb-4 outline-none">
+            <div class="border-2 border-dashed border-[var(--border-color)] rounded-lg p-6 text-center cursor-pointer hover:bg-black/5 transition relative">
+                <i class="ri-file-upload-line text-3xl opacity-30 mb-2 block"></i>
+                <span class="text-sm opacity-50">点击选择 .md 文件</span>
+                <input type="file" id="file-input" accept=".md" class="absolute inset-0 opacity-0 cursor-pointer" onchange="confirmImport()">
+            </div>
+            <button onclick="closeModal('import-modal')" class="mt-4 w-full py-2 opacity-50 hover:opacity-100 text-sm">取消</button>
+        </div>
+    </div>
+
+    <!-- 笔记输入 Modal -->
+    <div id="note-modal" class="fixed inset-0 bg-black/60 hidden z-[5000] items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl w-full max-w-sm p-5 shadow-2xl text-black">
+            <h3 class="font-bold mb-3">添加想法</h3>
+            <p id="note-ref-text" class="text-xs text-gray-500 italic mb-4 line-clamp-2 border-l-2 border-[var(--accent-color)] pl-2 bg-gray-50 p-2 rounded"></p>
+            <textarea id="note-input" rows="4" class="w-full border rounded-lg p-3 text-sm focus:outline-none" placeholder="记录想法..."></textarea>
+            <div class="flex gap-3 mt-4">
+                <button onclick="saveNote()" class="flex-1 bg-stone-800 text-white py-2 rounded-lg shadow">保存</button>
+                <button onclick="closeModal('note-modal')" class="flex-1 border py-2 rounded-lg">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 章节总结 Modal -->
+    <div id="chapter-summary-modal" class="fixed inset-0 bg-black/60 hidden z-[5200] items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl w-full max-w-sm p-5 shadow-2xl text-black">
+            <h3 class="font-bold mb-3">章节思维总结</h3>
+            <div class="text-xs opacity-50 mb-2" id="summary-chap-title"></div>
+            <textarea id="summary-input" rows="5" class="w-full border rounded-lg p-3 text-sm focus:outline-none" placeholder="本章的核心逻辑是什么？"></textarea>
+            <div class="flex gap-3 mt-4">
+                <button onclick="saveChapterSummary()" class="flex-1 bg-[var(--accent-color)] text-white py-2 rounded-lg shadow">保存</button>
+                <button onclick="closeModal('chapter-summary-modal')" class="flex-1 border py-2 rounded-lg">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 思维导图 Modal -->
+    <div id="mindmap-modal" class="fixed inset-0 bg-[var(--bg-color)] hidden z-[5000] flex-col">
+        <div class="p-4 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--ui-bg)] shadow-sm">
+            <h2 class="font-bold">全书脉络</h2>
+            <div class="text-xs opacity-50 ml-4 hidden sm:block">包含：章节、思维总结、笔记节点</div>
+            <button onclick="closeModal('mindmap-modal')" class="p-2 hover:bg-black/5 rounded ml-auto"><i class="ri-close-line text-xl"></i></button>
+        </div>
+        <div class="flex-1 overflow-auto bg-[var(--bg-color)] relative cursor-grab active:cursor-grabbing" id="mindmap-canvas">
+            <div class="mm-container" id="mindmap-root"></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 全局状态管理对象
+         * 存储应用运行时的所有核心数据
+         */
+        let state = {
+            chapters: [],              // 章节列表 {title, content}
+            currentChapterIndex: 0,    // 当前阅读章节索引
+            highlights: [],            // 高亮和笔记数组 {id, chapter, text, type, comment...}
+            chapterSummaries: {},      // 章节总结 {index: text}
+            globalNotes: "",           // 全书思维笔记内容
+            aiHistory: [],             // AI 对话历史
+            readLog: [],               // 行为日志数组 {time, type, detail}
+            apiKey: localStorage.getItem('qwen_key') || '', // AI Key
+            selectedText: '',          // 当前选中的文本
+            readingTime: 0,            // 当前会话阅读时长(秒)
+            totalTime: 0,              // 历史总阅读时长(秒)
+            fileName: 'document.md',   // 导入的文件名
+            originalContent: '',       // 原始 Markdown 文本
+            theme: localStorage.getItem('theme') || 'paper', // 当前主题
+            fontSize: parseInt(localStorage.getItem('fontSize')) || 18, // 字体大小
+            uiVisible: true,           // UI 显示状态
+            editingChapterSummaryIndex: -1, // 当前正在编辑总结的章节ID
+            isGlobalNoteMode: false ,   // 是否处于全书笔记编辑模式
+            // [新增] 当前生效的系统提示词 (优先读取本地存储)
+            systemPrompt: localStorage.getItem('systemPrompt') || "你是阅读助手，请用简洁、有启发性的语言回答。",
+        
+            // [新增] 预设列表 (你可以随意在这里修改/增加)
+            // [修改] 预设列表：label是按钮名，prompt是拼接的前缀
+            aiPresets: [
+                { label: "🧐 解释", prompt: "请用通俗易懂的语言解释这段文字的核心概念：" },
+                { label: "📝 总结", prompt: "请简要总结这段文字的主旨（3点以内）：" },
+                { label: "🇺🇸 翻译", prompt: "请将这段文字翻译成地道流畅的中文（若是中文则译为英文）：" },
+                { label: "❓ 提问", prompt: "基于这段文字，向我提出2个引导思考的问题：" },
+                { label: "⚖️ 批判", prompt: "请指出这段观点的局限性或逻辑漏洞：" }
+            ],
+        };
+
+        /**
+         * 初始化函数
+         * 页面加载完成后执行，恢复设置并绑定事件
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            setTheme(state.theme);
+            applyTypography();
+            initDraggables();
+            initTimer();
+            if(state.apiKey) document.getElementById('api-key').value = state.apiKey;
+            
+            // 点击外部关闭弹窗
+            document.addEventListener('click', (e) => {
+                const pop = document.getElementById('note-popup');
+                if (pop.style.display === 'block' && !pop.contains(e.target) && !e.target.classList.contains('highlight-text')) {
+                    pop.style.display = 'none';
+                }
+            });
+
+            // 监听全书笔记输入，实时更新 State (但不立即写Log，Log由按钮触发)
+            document.getElementById('global-notes-editor').addEventListener('input', (e) => {
+                state.globalNotes = e.target.value;
+            });
+            renderQuickActions(); // [新增]
+        });
+
+        /* --- 日志系统与数据看板核心 --- */
+
+        /**
+         * 记录用户行为日志
+         * @param {string} type 事件类型 (OPEN_CHAPTER, NOTE, HIGHLIGHT, EDIT_GLOBAL 等)
+         * @param {string} detail 事件详情描述
+         * @param {boolean} persist 是否持久化保存 (部分高频动作可设为false)
+         */
+        function logEvent(type, detail, persist = true) {
+            if(persist) {
+                state.readLog.push({ time: Date.now(), type, detail });
+            }
+            console.log(`[Log] ${type}: ${detail}`);
+        }
+
+        /**
+         * 显示数据看板
+         * @param {string} tab 默认打开的标签页 ('stats' | 'log')
+         */
+        function showDashboard(tab = 'stats') {
+            document.getElementById('dashboard-modal').style.display = 'flex';
+            switchDashTab(tab);
+            updateDashboardData();
+        }
+
+        /**
+         * 切换看板标签页
+         */
+        function switchDashTab(tab) {
+            const statsBtn = document.getElementById('tab-btn-stats');
+            const logBtn = document.getElementById('tab-btn-log');
+            const statsContent = document.getElementById('dash-content-stats');
+            const logContent = document.getElementById('dash-content-log');
+
+            if(tab === 'stats') {
+                statsBtn.classList.add('active'); logBtn.classList.remove('active');
+                statsContent.classList.remove('hidden'); logContent.classList.add('hidden');
+            } else {
+                logBtn.classList.add('active'); statsBtn.classList.remove('active');
+                logContent.classList.remove('hidden'); statsContent.classList.add('hidden');
+            }
+        }
+
+        /**
+         * 渲染图表：最近7天阅读活跃度
+         * 基于 state.readLog 中的时间戳进行聚合
+         */
+        function renderActivityChart() {
+            const chartContainer = document.getElementById('activity-chart');
+            const logs = state.readLog;
+            if(!logs || logs.length === 0) {
+                chartContainer.innerHTML = '<div class="text-xs opacity-40 w-full text-center">暂无阅读数据</div>';
+                return;
+            }
+
+            // 1. 生成最近7天的日期 Key (YYYY-MM-DD)
+            const days = [];
+            for(let i=6; i>=0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const key = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; // key for matching
+                const label = `${d.getMonth()+1}/${d.getDate()}`; // label for display
+                days.push({ key, label, count: 0 });
+            }
+
+            // 2. 统计每天的操作次数
+            logs.forEach(log => {
+                const d = new Date(log.time);
+                const key = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+                const target = days.find(day => day.key === key);
+                if(target) target.count++;
+            });
+
+            // 3. 计算最大值用于归一化高度
+            const maxCount = Math.max(...days.map(d => d.count), 1); // 避免除以0
+
+            // 4. 生成 HTML
+            const html = days.map(day => {
+                const heightPercent = Math.max((day.count / maxCount) * 100, 5); // 最小高度5%
+                const barColor = day.count > 0 ? 'var(--accent-color)' : 'var(--border-color)';
+                const opacity = day.count > 0 ? '1' : '0.3';
+                
+                return `
+                <div class="chart-bar-wrapper">
+                    <div class="chart-bar" style="height: ${heightPercent}%; background: ${barColor}; opacity: ${opacity}" title="${day.key}: ${day.count}次操作"></div>
+                    <div class="chart-label">${day.label}</div>
+                </div>`;
+            }).join('');
+
+            chartContainer.innerHTML = html;
+        }
+
+        /**
+         * 更新看板中的所有数据
+         */
+        function updateDashboardData() {
+            // 1. 顶部基础统计
+            const readCount = state.readLog.filter(l => l.type === 'OPEN_CHAPTER').map(l=>l.detail).filter((v,i,a)=>a.indexOf(v)===i).length;
+            const progress = state.chapters.length ? Math.round((readCount / state.chapters.length) * 100) : 0;
+            const noteCount = state.highlights.length;
+            const totalMin = Math.floor((state.totalTime + state.readingTime) / 60);
+
+            document.getElementById('dash-progress').innerText = `${progress}%`;
+            document.getElementById('dash-notes').innerText = noteCount;
+            document.getElementById('dash-time').innerText = totalMin < 60 ? `${totalMin}m` : `${(totalMin/60).toFixed(1)}h`;
+
+            // 2. 新增：编辑统计 (总结数 + 全书笔记字数)
+            const summaryCount = Object.keys(state.chapterSummaries).length;
+            const globalNoteLen = state.globalNotes.length;
+            document.getElementById('dash-edit-stats').innerText = `${summaryCount} / ${globalNoteLen}字`;
+
+            // 3. 渲染图表
+            renderActivityChart();
+
+            // 4. 章节概览表格
+            const chapterListEl = document.getElementById('dash-chapter-list');
+            if (state.chapters.length === 0) {
+                chapterListEl.innerHTML = '<div class="p-4 text-center opacity-50">请先导入书籍</div>';
+            } else {
+                chapterListEl.innerHTML = state.chapters.map((chap, idx) => {
+                    const cNotes = state.highlights.filter(h => h.chapter === idx).length;
+                    const hasSummary = !!state.chapterSummaries[idx];
+                    return `
+                    <div class="chapter-row cursor-pointer" onclick="closeModal('dashboard-modal');renderChapter(${idx})">
+                        <span class="opacity-50">${idx+1}</span>
+                        <span class="truncate font-medium">${chap.title}</span>
+                        <span class="text-center opacity-70">${cNotes > 0 ? cNotes : '-'}</span>
+                        <span class="text-right">${hasSummary ? '<i class="ri-check-line text-green-500"></i>' : '<span class="opacity-30 text-xs">无</span>'}</span>
+                    </div>`;
+                }).join('');
+            }
+
+            // 5. 时间轴渲染 (倒序)
+            const list = document.getElementById('timeline-list');
+            let combined = state.readLog.map(l => ({...l, isLog: true}));
+            combined.sort((a,b) => b.time - a.time); 
+
+            if(combined.length === 0) {
+                list.innerHTML = '<div class="text-center opacity-50 py-4">暂无数据记录</div>';
+            } else {
+                let html = '<div class="timeline-container">';
+                combined.forEach(item => {
+                    const date = new Date(item.time);
+                    const timeStr = `${date.getMonth()+1}-${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2,'0')}`;
+                    let icon = 'ri-circle-fill';
+                    let label = '记录';
+
+                    // 根据类型分配图标
+                    if(item.type === 'OPEN_CHAPTER') { icon = 'ri-book-open-line'; label = '阅读章节'; }
+                    else if(item.type === 'NOTE') { icon = 'ri-edit-line'; label = '想法笔记'; }
+                    else if(item.type === 'HIGHLIGHT') { icon = 'ri-mark-pen-line'; label = '划线'; }
+                    else if(item.type === 'SUMMARY') { icon = 'ri-file-list-3-line'; label = '章节总结'; }
+                    else if(item.type === 'EXPORT') { icon = 'ri-save-line'; label = '导出备份'; }
+                    else if(item.type === 'EDIT_GLOBAL') { icon = 'ri-save-3-line'; label = '全书笔记'; }
+
+                    html += `
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-time">${timeStr} • <i class="${icon}"></i> ${label}</div>
+                            <div class="opacity-90 break-words">${item.detail}</div>
+                        </div>
+                    </div>`;
+                });
+                html += '</div>';
+                list.innerHTML = html;
+            }
+        }
+
+        /* --- 核心业务逻辑 --- */
+
+        /**
+         * 打开全书笔记模式
+         */
+        function openGlobalNotes() {
+            state.isGlobalNoteMode = true;
+            document.getElementById('content').style.display = 'none';
+            document.getElementById('global-editor-container').style.display = 'block';
+            document.getElementById('page-info').innerText = "Editor Mode";
+            
+            // 自动插入当天日期标题，方便写日记
+            const today = new Date().toISOString().split('T')[0];
+            const header = `### ${today}`;
+            if (!state.globalNotes.trim().endsWith(header) && !state.globalNotes.includes(header + "\n")) {
+                if(state.globalNotes) state.globalNotes += "\n\n";
+                state.globalNotes += header + "\n";
+            }
+            document.getElementById('global-notes-editor').value = state.globalNotes;
+            if(window.innerWidth < 640) toggleSidebar('left');
+            
+            // 注意：单纯打开不记Log，点击保存才记
+        }
+
+        /**
+         * 手动保存全书笔记并记录日志 (新增功能)
+         */
+        function saveGlobalNotesManually() {
+            const currentLength = state.globalNotes.length;
+            // 模拟保存（实际上变量已经通过 input 事件更新了）
+            
+            // 记录日志
+            logEvent('EDIT_GLOBAL', `更新全书思维笔记 (当前字数: ${currentLength})`);
+            
+            // 视觉反馈
+            const btn = document.querySelector('#global-editor-container button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="ri-check-line"></i> 已记录';
+            btn.classList.add('bg-green-600');
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('bg-green-600');
+            }, 1500);
+        }
+
+        /**
+         * 渲染左侧目录
+         */
+        function renderTOC() {
+            const list = document.getElementById('chapter-list');
+            list.innerHTML = state.chapters.map((c, i) => {
+                const isActive = i === state.currentChapterIndex && !state.isGlobalNoteMode;
+                const summary = state.chapterSummaries[i];
+                return `
+                <div class="toc-item ${isActive ? 'active' : ''}">
+                    <div onclick="renderChapter(${i})" class="font-medium truncate flex items-center gap-2">
+                        ${isActive ? '<i class="ri-arrow-right-s-fill"></i>' : ''} ${c.title}
+                    </div>
+                    <div class="toc-summary-box">
+                        <div onclick="renderChapter(${i})">
+                            ${summary ? `<i class="ri-chat-quote-line text-[var(--accent-color)]"></i> ${summary}` : '<span class="italic opacity-50">点击右下角按钮添加总结...</span>'}
+                        </div>
+                        <div class="toc-actions">
+                            <button onclick="openChapterSummary(${i}, event)" class="toc-btn" title="编写总结"><i class="ri-edit-line"></i> 编辑</button>
+                            <button onclick="askAIAboutChapter(${i}, event)" class="toc-btn" title="AI提问"><i class="ri-robot-line"></i> 提问</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        /**
+         * 解析 Markdown 文件
+         * 包含分离正文和隐藏的 JSON 数据块
+         */
+        function parseMarkdown(md) {
+            // 尝试读取文件尾部的隐藏 JSON 数据
+            const dataMatch = md.match(/<!-- READER_DATA_START([\s\S]*?)READER_DATA_END -->/);
+            state.originalContent = md.replace(/<!-- READER_DATA_START[\s\S]*?READER_DATA_END -->/, '').replace(/\n\n# 附录：全书思维笔记[\s\S]*/, '');
+            
+            if (dataMatch) {
+                try {
+                    const saved = JSON.parse(dataMatch[1]);
+                    // 恢复状态
+                    state.highlights = saved.highlights || [];
+                    state.chapterSummaries = saved.chapterSummaries || {};
+                    state.globalNotes = saved.globalNotes || "";
+                    state.readLog = saved.readLog || [];
+                    state.totalTime = saved.totalTime || 0;
+                    
+                    if(saved.lastChapter !== undefined) setTimeout(()=>renderChapter(saved.lastChapter), 100);
+                } catch(e) { console.error('数据解析失败', e); }
+            }
+            
+            // 简单的 H1 分章逻辑
+            const sections = state.originalContent.split(/^#\s+/m);
+            const chapters = [];
+            if (sections[0].trim()) chapters.push({ title: '前言/简介', content: sections[0] });
+            for (let i = 1; i < sections.length; i++) {
+                const lines = sections[i].split('\n');
+                chapters.push({ title: lines[0].trim(), content: '# ' + sections[i] });
+            }
+            state.chapters = chapters;
+            if(!dataMatch) renderChapter(0);
+            closeModal('import-modal');
+        }
+
+        /**
+         * 渲染特定章节
+         */
+        function renderChapter(index) {
+            if (state.isGlobalNoteMode) {
+                state.isGlobalNoteMode = false;
+                document.getElementById('content').style.display = 'block';
+                document.getElementById('global-editor-container').style.display = 'none';
+            }
+            if (index < 0 || index >= state.chapters.length) return;
+            state.currentChapterIndex = index;
+            // 渲染 Markdown
+            document.getElementById('content').innerHTML = marked.parse(state.chapters[index].content);
+            applyHighlights(); // 应用高亮
+            renderTOC(); 
+            document.getElementById('page-info').innerText = `${index + 1} / ${state.chapters.length}`;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // 移动端自动收起侧边栏
+            if(window.innerWidth < 640) document.getElementById('sidebar-left').classList.remove('active');
+            
+            // 记录日志（防止重复记录同一章）
+            const title = state.chapters[index].title;
+            const lastLog = state.readLog[state.readLog.length-1];
+            if(!lastLog || lastLog.type !== 'OPEN_CHAPTER' || lastLog.detail !== title) {
+                logEvent('OPEN_CHAPTER', title);
+            }
+        }
+
+        /**
+         * 将高亮应用到 DOM 中
+         */
+        function applyHighlights() {
+            const container = document.getElementById('content');
+            let html = marked.parse(state.chapters[state.currentChapterIndex].content);
+            const currentHighlights = state.highlights.filter(h => h.chapter === state.currentChapterIndex).sort((a,b) => b.text.length - a.text.length);
+            
+            // 简单的字符串替换实现高亮（生产环境建议用更健壮的 Range 还原）
+            currentHighlights.forEach(h => {
+                const marker = h.type === 'note' ? `<i class="ri-chat-1-fill text-[var(--accent-color)] text-xs ml-1 align-top"></i>` : '';
+                const span = `<span class="highlight-text" onclick="showNoteDetail(${h.id}, event)">${h.text}${marker}</span>`;
+                html = html.split(h.text).join(span);
+            });
+            container.innerHTML = html;
+        }
+
+        /**
+         * 导出包含数据的文件
+         * 将 State 序列化为 JSON 并追加到 Markdown 尾部
+         */
+        function exportWithData() {
+            if (!state.chapters.length) { alert("无内容可导出"); return; }
+            logEvent('EXPORT', '导出数据备份');
+            
+            const dataToSave = { 
+                highlights: state.highlights, 
+                lastChapter: state.currentChapterIndex, 
+                chapterSummaries: state.chapterSummaries,
+                globalNotes: state.globalNotes,
+                readLog: state.readLog,
+                totalTime: state.totalTime + state.readingTime, // 累加时间
+                timestamp: Date.now() 
+            };
+            
+            let contentToSave = state.originalContent;
+            // 附录形式追加笔记，方便普通阅读器查看
+            if (state.globalNotes.trim()) {
+                contentToSave += `\n\n# 附录：全书思维笔记\n\n${state.globalNotes}`;
+            }
+            // 隐藏数据块，用于本软件还原
+            const footer = `\n\n<!-- READER_DATA_START${JSON.stringify(dataToSave)}READER_DATA_END -->`;
+            contentToSave += footer;
+            
+            const dateStr = new Date().toISOString().split('T')[0]; 
+            const baseName = state.fileName.replace(/\.md$/i, '') || 'reading-notes';
+            const exportName = `${baseName}-${dateStr}.md`;
+            
+            // 触发下载
+            const blob = new Blob([contentToSave], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = exportName;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+        }
+
+        /* --- 思维导图逻辑 --- */
+        function openMindMap() {
+            if (state.chapters.length === 0) return alert('请先导入书籍');
+            renderMindMap();
+            document.getElementById('mindmap-modal').style.display = 'flex';
+            if(window.innerWidth < 640) document.getElementById('sidebar-right').classList.remove('active');
+        }
+
+        function renderMindMap() {
+            const rootEl = document.getElementById('mindmap-root');
+            const bookName = state.fileName.replace('.md', '');
+            let html = `<ul class="mm-tree"><li><span class="mm-node mm-root">${bookName}</span><ul>`;
+            
+            // 节点：全书笔记
+            const globalNotePreview = state.globalNotes ? state.globalNotes.substring(0, 15) + "..." : "点击编辑全书笔记";
+            html += `<li><span class="mm-node mm-global-note" onclick="closeModal('mindmap-modal');openGlobalNotes()">📝 全书思维笔记</span><div class="toggle-btn" onclick="toggleMapNode(this)">+</div><ul class="hidden"><li><span class="mm-node italic opacity-70">${globalNotePreview}</span></li></ul></li>`;
+
+            // 节点：各章节
+            state.chapters.forEach((chap, idx) => {
+                const chapterNotes = state.highlights.filter(h => h.chapter === idx);
+                const summary = state.chapterSummaries[idx];
+                let childrenHtml = ''; let hasChildren = false;
+                
+                // 总结节点
+                if (summary) { 
+                    childrenHtml += `<li><span class="mm-node mm-summary" title="${summary}" onclick="openChapterSummary(${idx})">📝 总结: ${summary.substring(0,12)}...</span></li>`; 
+                    hasChildren = true; 
+                } else {
+                    childrenHtml += `<li><span class="mm-node mm-summary opacity-50" onclick="openChapterSummary(${idx})">+ 添加总结</span></li>`;
+                    hasChildren = true;
+                }
+                
+                // 笔记节点
+                if (chapterNotes.length > 0) { 
+                    childrenHtml += chapterNotes.map(n => `<li><span class="mm-node" onclick="closeModal('mindmap-modal');renderChapter(${n.chapter});setTimeout(()=>showNoteDetail(${n.id}, {target: document.querySelectorAll('.highlight-text')[0], stopPropagation:()=>{}}), 500)" title="${n.text}">${n.type==='note'?'💡':''} ${n.text.substring(0,10)}...</span></li>`).join(''); 
+                    hasChildren = true; 
+                }
+                
+                const toggleBtn = hasChildren ? `<div class="toggle-btn" onclick="toggleMapNode(this)">-</div>` : '';
+                html += `<li><span class="mm-node" onclick="closeModal('mindmap-modal');renderChapter(${idx})">${chap.title}</span>${toggleBtn}${hasChildren ? `<ul>${childrenHtml}</ul>` : ''}</li>`;
+            });
+            html += `</ul></li></ul>`;
+            rootEl.innerHTML = html;
+        }
+
+        /* --- 辅助功能与 UI 交互 --- */
+        
+        // 拖拽功能初始化
+        function initDraggables() {
+            makeDraggable(document.getElementById('ai-header'), document.getElementById('ai-card'));
+            makeDraggable(document.getElementById('float-ball'), document.getElementById('float-ball'), true);
+        }
+        
+        // 通用拖拽逻辑
+        function makeDraggable(handle, target, isClickable = false) {
+            let isDragging = false, startX, startY, initialLeft, initialTop, hasMoved = false;
+            const start = (e) => {
+                if(e.target.closest('button')) return;
+                isDragging = true; hasMoved = false;
+                const c = e.touches ? e.touches[0] : e;
+                startX = c.clientX; startY = c.clientY;
+                const rect = target.getBoundingClientRect();
+                initialLeft = rect.left; initialTop = rect.top;
+                target.style.transition='none';
+            };
+            const move = (e) => {
+                if (!isDragging) return;
+                const c = e.touches ? e.touches[0] : e;
+                const dx = c.clientX - startX; const dy = c.clientY - startY;
+                if (Math.abs(dx)>3 || Math.abs(dy)>3) hasMoved = true;
+                if (hasMoved) e.preventDefault(); 
+                target.style.left = (initialLeft + dx) + 'px';
+                target.style.top = (initialTop + dy) + 'px';
+            };
+            const end = (e) => { 
+                isDragging = false; target.style.transition='all 0.2s';
+            };
+            handle.addEventListener('mousedown', start); document.addEventListener('mousemove', move); document.addEventListener('mouseup', end);
+            handle.addEventListener('touchstart', start, {passive:false}); document.addEventListener('touchmove', move, {passive:false}); handle.addEventListener('touchend', end);
+        }
+        
+        // 点击中央切换沉浸模式
+        function handleCenterClick(e) {
+            if (e.target.closest('a') || e.target.closest('.highlight-text') || e.target.closest('textarea') || window.getSelection().toString()) return;
+            state.uiVisible = !state.uiVisible;
+            document.body.classList.toggle('ui-hidden', !state.uiVisible);
+            if(!state.uiVisible) document.getElementById('style-panel').style.display = 'none';
+        }
+
+        // 侧边栏开关
+        function toggleSidebar(s) { 
+            const el = document.getElementById('sidebar-'+s); 
+            el.classList.toggle('active'); 
+            if(s==='right' && el.classList.contains('active')) renderNotesSidebar(); 
+        }
+
+        // AI 提问章节内容
+        function askAIAboutChapter(index, e) {
+            if(e) e.stopPropagation();
+            document.getElementById('sidebar-left').classList.remove('active');
+            toggleAICard(true);
+            const chap = state.chapters[index];
+            const summary = state.chapterSummaries[index] || "暂无总结";
+            let contextContent = chap.content.length > 3000 ? chap.content.substring(0, 3000) + "..." : chap.content;
+            const prompt = `我正在阅读《${chap.title}》。\n总结：${summary}\n\n内容片段：\n${contextContent}\n\n请回答：`;
+            document.getElementById('ai-input').value = prompt;
+        }
+
+        // 3. [新增] 执行快捷操作 (拼接 + 发送)
+        function sendQuickAction(promptPrefix) {
+            const input = document.getElementById('ai-input');
+            let currentText = input.value.trim();
+            
+            // 逻辑判断：如果输入框里已经有刚才自动填入的引用文本
+            if (currentText.includes('> ')) {
+                // 拼接：预设提示词 + 换行 + 输入框里的引用内容
+                // 例如： "请解释：\n\n > 选中的文字..."
+                const finalQuery = `${promptPrefix}\n\n${currentText}`;
+                
+                // 调用发送逻辑，传入组装好的文本
+                sendAIQuery(finalQuery);
+                
+            } else {
+                // 如果输入框是空的，或者用户自己写的字，直接把提示词加在前面
+                input.value = promptPrefix + input.value;
+                input.focus();
+            }
+        }
+
+        // 发送 AI 请求 (调用 DashScope API)
+        // 4. [修改] 发送函数，支持直接传入 content 参数
+        async function sendAIQuery(directContent = null) {
+            const input = document.getElementById('ai-input'); 
+            
+            // 优先使用传入的内容，否则读取输入框
+            const q = directContent || input.value.trim(); 
+            
+            if(!q) return;
+            if(!state.apiKey) { showImportModal(); return; }
+            
+            input.value = ''; // 清空输入框
+        
+            const msgBox = document.getElementById('ai-messages');
+            
+            // 用户消息气泡
+            const uDiv = document.createElement('div'); 
+            uDiv.className = 'bg-[var(--accent-color)] text-white p-3 rounded-lg rounded-br-none self-end ml-8 text-sm shadow-sm whitespace-pre-wrap'; // [修改] 增加 whitespace-pre-wrap 支持换行显示
+            uDiv.innerText = q; 
+            msgBox.appendChild(uDiv);
+            
+            state.aiHistory.push({role: 'user', content: q}); 
+            
+            // AI Loading 气泡
+            const loadId = 'msg-' + Date.now();
+            const aDiv = document.createElement('div'); 
+            aDiv.className = 'bg-white text-black/80 p-3 rounded-lg rounded-bl-none mr-8 border text-sm shadow-sm'; 
+            aDiv.id = loadId; 
+            aDiv.innerHTML = '<i class="ri-loader-4-line animate-spin"></i> 思考中...'; 
+            msgBox.appendChild(aDiv); 
+            msgBox.scrollTop = msgBox.scrollHeight;
+        
+            try {
+                const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+                    method: 'POST', 
+                    headers: {'Authorization': `Bearer ${state.apiKey}`, 'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        model: "qwen-turbo", 
+                        // 这里依然使用 systemPrompt 作为底层的角色设定
+                        messages: [{role:"system",content: state.systemPrompt}, ...state.aiHistory.slice(-6)]
+                    })
+                });
+                const data = await res.json(); 
+                const reply = data.choices[0].message.content;
+                document.getElementById(loadId).innerHTML = marked.parse(reply);
+                state.aiHistory.push({role: 'assistant', content: reply}); 
+                msgBox.scrollTop = msgBox.scrollHeight; // 自动滚动到底部
+            } catch(e) { 
+                document.getElementById(loadId).innerText = '请求失败: ' + e.message; 
+            }
+        }
+
+        // AI 分析选中的笔记
+        function analyzeSelectedNotes() {
+            const sels = state.highlights.filter(n => n.selected);
+            if (!sels.length) return alert('请先在侧边栏勾选笔记');
+            toggleAICard(true);
+            const content = sels.map((n, i) => `${i + 1}. [${n.type}] "${n.text}" ${n.comment ? '想法:' + n.comment : ''}`).join('\n');
+            document.getElementById('ai-input').value = `分析以下笔记的核心观点：\n${content}`;
+            sendAIQuery();
+        }
+
+        // UI 操作函数群
+        function openNoteModal() { document.getElementById('note-ref-text').innerText = state.selectedText; document.getElementById('note-modal').style.display = 'flex'; document.getElementById('bubble-menu').style.display = 'none'; }
+        function showImportModal() { document.getElementById('import-modal').style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        // 确认导入文件
+        function confirmImport() {
+            const k = document.getElementById('api-key').value;
+            const f = document.getElementById('file-input').files[0];
+            if(k) { state.apiKey=k; localStorage.setItem('qwen_key', k); }
+            if(f) { state.fileName = f.name; const r = new FileReader(); r.onload = e => parseMarkdown(e.target.result); r.readAsText(f); }
+            else { document.getElementById('file-input').click(); }
+        }
+
+        // 监听文本选中，显示气泡菜单
+        function handleSelection() {
+            const sel = window.getSelection(); const text = sel.toString().trim(); const menu = document.getElementById('bubble-menu');
+            if (text.length === 0 || !document.getElementById('content').contains(sel.anchorNode)) { menu.style.display = 'none'; return; }
+            state.selectedText = text;
+            const rect = sel.getRangeAt(0).getBoundingClientRect();
+            menu.style.display = 'flex'; menu.style.top = (rect.bottom + window.scrollY + 8) + 'px'; menu.style.left = (rect.left + rect.width / 2) + 'px';
+        }
+
+        // 保存划线
+        function handleHighlight() { 
+            state.highlights.push({ id: Date.now(), chapter: state.currentChapterIndex, text: state.selectedText, type: 'highlight' }); 
+            logEvent('HIGHLIGHT', `划线: ${state.selectedText.substring(0,10)}...`);
+            finishAnnotation(); 
+        }
+
+        // 保存笔记
+        function saveNote() { 
+            const val = document.getElementById('note-input').value; 
+            if(val) { 
+                state.highlights.push({ id: Date.now(), chapter: state.currentChapterIndex, text: state.selectedText, type: 'note', comment: val }); 
+                logEvent('NOTE', `笔记: ${val.substring(0,10)}...`);
+                finishAnnotation(); 
+            } 
+        }
+
+        // 完成标注后的清理工作
+        function finishAnnotation() { applyHighlights(); closeModal('note-modal'); document.getElementById('bubble-menu').style.display = 'none'; document.getElementById('note-input').value = ''; document.getElementById('note-badge').classList.remove('hidden'); window.getSelection().removeAllRanges(); renderNotesSidebar(); }
+        
+        // 渲染右侧笔记列表
+        function renderNotesSidebar() {
+            const list = document.getElementById('notes-list');
+            document.getElementById('selected-count').innerText = state.highlights.filter(n=>n.selected).length;
+            list.innerHTML = state.highlights.map(n => `
+                <div class="bg-black/5 p-3 rounded-lg relative group transition hover:bg-black/10">
+                    <div class="flex gap-2">
+                        <input type="checkbox" class="mt-1" onchange="toggleNoteSel(${n.id}, this.checked)" ${n.selected?'checked':''}>
+                        <div class="flex-1 cursor-pointer" onclick="renderChapter(${n.chapter})">
+                            <div class="text-xs opacity-40 mb-1">第 ${n.chapter+1} 章</div>
+                            <div class="border-l-2 border-[var(--accent-color)] pl-2 text-[var(--text-color)] opacity-90 mb-2 font-serif">"${n.text}"</div>
+                            ${n.comment ? `<div class="text-xs bg-white/60 p-2 rounded text-black/80">${n.comment}</div>` : ''}
+                        </div>
+                        <button onclick="deleteNote(${n.id})" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600"><i class="ri-delete-bin-line"></i></button>
+                    </div>
+                </div>`).join('');
+        }
+
+        // 显示笔记详情气泡
+        function showNoteDetail(id, e) {
+            e.stopPropagation(); const n = state.highlights.find(x => x.id === id); if (!n) return;
+            const pop = document.getElementById('note-popup');
+            document.getElementById('popup-content').innerText = n.text;
+            const pComment = document.getElementById('popup-comment');
+            if (n.comment) { pComment.innerText = n.comment; pComment.classList.remove('hidden'); } else { pComment.classList.add('hidden'); }
+            document.getElementById('popup-delete-btn').onclick = () => { deleteNote(id); pop.style.display = 'none'; };
+            pop.style.display = 'block';
+            const rect = e.target.getBoundingClientRect();
+            let left = rect.left + (rect.width/2) - 130 + window.scrollX;
+            pop.style.left = left + 'px'; pop.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+        }
+
+        function toggleNoteSel(id, checked) { state.highlights.find(n=>n.id===id).selected = checked; renderNotesSidebar(); }
+        function deleteNote(id) { state.highlights = state.highlights.filter(n=>n.id!==id); renderNotesSidebar(); applyHighlights(); }
+        
+        // 阅读计时器 (每秒触发)
+        function initTimer() { setInterval(() => { state.readingTime++; const m = Math.floor(state.readingTime / 60).toString().padStart(2, '0'); const s = (state.readingTime % 60).toString().padStart(2, '0'); document.getElementById('ball-timer').innerText = `${m}:${s}`; }, 1000); }
+        
+        // 翻页逻辑
+        function prevPage() { if(state.currentChapterIndex>0) renderChapter(state.currentChapterIndex-1); }
+        function nextPage() { if(state.currentChapterIndex<state.chapters.length-1) renderChapter(state.currentChapterIndex+1); }
+        
+        // AI 窗口控制
+        function openAIChat() { toggleAICard(true); }
+        function toggleAICard(show) { const c=document.getElementById('ai-card'); c.style.display = (show===true || c.style.display==='none') ? 'flex' : 'none'; }
+         // 2. [修改] 点击气泡菜单的"问AI"
+        function askAIWithSelection() {
+            toggleAICard(true);
+            
+            // 视觉反馈：把选中的字填入输入框，显示为引用格式，方便用户知道 AI 会针对这段话
+            const quote = `> ${state.selectedText}\n\n`;
+            const input = document.getElementById('ai-input');
+            input.value = quote; 
+            input.focus();
+            
+            // 隐藏气泡菜单
+            document.getElementById('bubble-menu').style.display = 'none';
+            
+            // 自动滚动到底部，让用户看到快捷按钮
+            const msgBox = document.getElementById('ai-messages');
+            msgBox.scrollTop = msgBox.scrollHeight;
+        }
+        function clearChat() { state.aiHistory = []; document.getElementById('ai-messages').innerHTML = '<div class="text-center text-xs opacity-40 py-4">对话已清空</div>'; }
+        
+        // 样式设置
+        function setTheme(t) { 
+            document.body.setAttribute('data-theme', t); 
+            localStorage.setItem('theme', t); 
+            document.querySelectorAll('.color-btn').forEach(b => { 
+                b.classList.toggle('active', b.getAttribute('onclick').includes(t)); 
+            }); 
+        }
+        function changeFontSize(delta) { const newSize = state.fontSize + delta; if (newSize >= 14 && newSize <= 32) { state.fontSize = newSize; localStorage.setItem('fontSize', newSize); applyTypography(); } }
+        function applyTypography() { const root = document.documentElement; root.style.setProperty('--font-size', state.fontSize + 'px'); document.getElementById('font-size-display').innerText = state.fontSize; }
+        function toggleStylePanel() { const p = document.getElementById('style-panel'); p.style.display = p.style.display==='flex'?'none':'flex'; }
+        
+        // 导图节点折叠
+        function toggleMapNode(btn) { const li = btn.parentElement; const ul = li.querySelector('ul'); if(ul) { ul.classList.toggle('hidden'); li.classList.toggle('collapsed'); btn.innerText = ul.classList.contains('hidden') ? '+' : '-'; } }
+        
+        // 章节总结相关
+        function openChapterSummary(idx, e) { 
+            if(e) e.stopPropagation(); 
+            state.editingChapterSummaryIndex = idx; 
+            document.getElementById('summary-chap-title').innerText = state.chapters[idx].title; 
+            document.getElementById('summary-input').value = state.chapterSummaries[idx] || ''; 
+            document.getElementById('chapter-summary-modal').style.display = 'flex'; 
+        }
+        function saveChapterSummary() { 
+            const txt = document.getElementById('summary-input').value; 
+            const idx = state.editingChapterSummaryIndex;
+            if(txt) { 
+                state.chapterSummaries[idx] = txt; 
+                logEvent('SUMMARY', `章节总结: ${state.chapters[idx].title}`);
+            } else { 
+                delete state.chapterSummaries[idx]; 
+            } 
+            closeModal('chapter-summary-modal'); 
+            renderTOC(); 
+        }
+        
+        // 监听选区变化以显示菜单
+        document.addEventListener('selectionchange', handleSelection);
+        /* --- AI 设置相关逻辑 --- */
+        
+        // 1. 切换面板显示 + 渲染标签
+        function toggleAISettings() {
+            const layer = document.getElementById('ai-settings-layer');
+            
+            if (layer.classList.contains('hidden')) {
+                // 打开面板
+                layer.classList.remove('hidden');
+                
+                // 填充当前正在使用的提示词
+                document.getElementById('ai-prompt-input').value = state.systemPrompt;
+                
+                // 渲染快捷标签 (每次打开渲染一次，确保数据最新)
+                const container = document.getElementById('preset-tags');
+                container.innerHTML = state.aiPresets.map(p => 
+                    `<button onclick="applyPreset('${p.prompt.replace(/'/g, "\\'")}')" 
+                             class="text-xs px-2 py-1 bg-gray-100 hover:bg-[var(--accent-color)] hover:text-white rounded border border-gray-200 transition">
+                        ${p.name}
+                     </button>`
+                ).join('');
+                
+            } else {
+                // 关闭面板
+                layer.classList.add('hidden');
+            }
+        }
+        
+        // 2. 点击标签：将预设填入输入框 (允许用户二次编辑)
+        function applyPreset(text) {
+            const input = document.getElementById('ai-prompt-input');
+            input.value = text;
+            // 视觉反馈：闪烁一下输入框
+            input.classList.add('bg-yellow-50');
+            setTimeout(() => input.classList.remove('bg-yellow-50'), 200);
+        }
+        
+        // 3. 保存设置 (保持不变)
+        function saveAIPrompt() {
+            const val = document.getElementById('ai-prompt-input').value.trim();
+            if (val) {
+                state.systemPrompt = val;
+                localStorage.setItem('systemPrompt', val); 
+                
+                // 按钮反馈
+                const btn = document.querySelector('#ai-settings-layer button'); // 获取保存按钮
+                const oldText = btn.innerText;
+                btn.innerText = "已保存！";
+                btn.classList.add('bg-green-600');
+                
+                setTimeout(() => {
+                    btn.innerText = oldText;
+                    btn.classList.remove('bg-green-600');
+                    document.getElementById('ai-settings-layer').classList.add('hidden'); // 关闭
+                }, 800);
+            }
+        }
+        // 1. 初始化时渲染快捷按钮 (加在 DOMContentLoaded 里或者直接放在 script 末尾执行)
+        function renderQuickActions() {
+            const container = document.getElementById('ai-quick-actions');
+            if(!container) return;
+            
+            container.innerHTML = state.aiPresets.map(preset => `
+                <button onclick="sendQuickAction('${preset.prompt}')" 
+                        class="text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:text-[var(--accent-color)] hover:border-[var(--accent-color)] hover:bg-[var(--accent-color)]/5 transition shadow-sm flex-shrink-0">
+                    ${preset.label}
+                </button>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
