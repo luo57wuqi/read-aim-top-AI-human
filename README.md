@@ -9,13 +9,36 @@
 
 **极简智读** 是一款专为深度阅读者设计的浏览器端应用。它无需安装、无需联网（基础阅读功能），支持 Markdown 文件导入。通过内置的 AI 助手、思维导图和数据看板，帮助你不仅“读完”一本书，更能“读懂”一本书。
 
-![项目截图](https://via.placeholder.com/800x400?text=App+Screenshot+Placeholder)
-*(建议在此处替换为实际的软件截图)*
+概览：
+<img width="1894" height="729" alt="image" src="https://github.com/user-attachments/assets/8b678bc2-f8b4-4d5f-bd04-a8059e736734" />
+
+目录+章节笔记
+<img width="435" height="713" alt="image" src="https://github.com/user-attachments/assets/775568ab-08f8-4aa7-b6a5-4d7fc715224b" />
+<img width="1353" height="604" alt="image" src="https://github.com/user-attachments/assets/6e93ae09-eafc-49f0-a97e-d2e396061c5e" />
+
+全书笔记：
+<img width="939" height="627" alt="image" src="https://github.com/user-attachments/assets/2d66c550-6baf-46ed-93d2-a3087b90fab8" />
+
+章节思维导图
+<img width="1135" height="705" alt="image" src="https://github.com/user-attachments/assets/439a6951-ec99-4afa-b648-2501daa8df94" />
+
+章节笔记
+<img width="428" height="721" alt="image" src="https://github.com/user-attachments/assets/aca8151c-1bfd-47ba-9366-f4042aef7bf2" />
+
+AI划线对话
+<img width="1171" height="740" alt="image" src="https://github.com/user-attachments/assets/08a9ee11-c2a9-4169-bdb0-587fa9ad03d4" />
+
+AI设定常用提示词
+<img width="668" height="657" alt="image" src="https://github.com/user-attachments/assets/1c642594-405d-4f0e-bab2-19ae3d76f0a2" />
+
+
+
 
 ---
 
 ## ✨ 核心亮点
-
+1 导出{阅读数据一起导出}后导入，阅读数据都在md   
+2 单个html
 ### 1. 沉浸式阅读体验
 *   **多主题切换**：内置羊皮纸、面壁灰、香芋紫、护眼绿、暗黑模式等 6 种配色。
 *   **排版优化**：自动生成侧边栏目录，支持字号无级调节，专注模式自动隐藏 UI。
